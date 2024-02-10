@@ -39,7 +39,7 @@ def remove_alter(s):  # hack expressive instruction
     if s[-1]!='.': s += '.'
     return s.strip()
 
-def go_mgie(img, txt, seed, cfg_txt, cfg_img, image_processor, image_token_len, EMB, tokenizer, model, pipe):
+def go_mgie(img, txt, seed, cfg_txt, cfg_img, image_processor, image_token_len, EMB, tokenizer, model, pipe, NULL):
     img, seed = crop_resize(Image.fromarray(img).convert('RGB')), int(seed)
     inp = img
 
@@ -65,7 +65,7 @@ def go_mgie(img, txt, seed, cfg_txt, cfg_img, image_processor, image_token_len, 
 
         out = remove_alter(tokenizer.decode(out))
         emb = model.edit_head(hid.unsqueeze(dim=0), EMB)
-        res = pipe(image=inp, prompt_embeds=emb, negative_prompt_embeds=None, 
+        res = pipe(image=inp, prompt_embeds=emb, negative_prompt_embeds=NULL, 
                    generator=T.Generator(device='cuda').manual_seed(seed), guidance_scale=cfg_txt, image_guidance_scale=cfg_img).images[0]
         res.save("/content/image.png")
     return "/content/image.png", out
@@ -97,7 +97,7 @@ class Predictor(BasePredictor):
         
         _ = self.model.eval()
         self.EMB = ckpt['emb'].cuda()
-        with T.inference_mode(): NULL = self.model.edit_head(T.zeros(1, 8, 4096).half().to('cuda'), self.EMB)
+        with T.inference_mode(): self.NULL = self.model.edit_head(T.zeros(1, 8, 4096).half().to('cuda'), self.EMB)
         
         self.pipe = diffusers.StableDiffusionInstructPix2PixPipeline.from_pretrained('timbrooks/instruct-pix2pix', torch_dtype=T.float16).to('cuda')
         self.pipe.set_progress_bar_config(disable=True)
@@ -111,5 +111,5 @@ class Predictor(BasePredictor):
         text_cfg: float = Input(default=7.5),
         image_cfg: float = Input(default=1.5),
     ) -> Output:
-        res, out = go_mgie(np.array(Image.open(input_image).convert('RGB')), prompt, seed, text_cfg, image_cfg, self.image_processor, self.image_token_len, self.EMB, self.tokenizer, self.model, self.pipe)
+        res, out = go_mgie(np.array(Image.open(input_image).convert('RGB')), prompt, seed, text_cfg, image_cfg, self.image_processor, self.image_token_len, self.EMB, self.tokenizer, self.model, self.pipe, self.NULL)
         return Output(path = Path(res), text = out)
