@@ -1,0 +1,28 @@
+build:
+  gpu: false
+  python_version: "3.10"
+  run:
+    - apt update -y && apt install -y software-properties-common python3-launchpadlib && apt update -y && add-apt-repository -y ppa:git-core/ppa && apt update -y
+    - apt install -y gcc g++ aria2 git git-lfs wget libgl1 libglib2.0-0 ffmpeg cmake libgtk2.0-0 libopenmpi-dev
+    - wget https://developer.download.nvidia.com/compute/cuda/12.1.0/local_installers/cuda_12.1.0_530.30.02_linux.run && sh cuda_12.1.0_530.30.02_linux.run --silent --toolkit
+    - git clone https://github.com/aristocratos/btop /content/btop && cd /content/btop && make && make install PREFIX=/usr && rm -rf /content/btop
+    - pip install torch==2.1.0+cu121 torchvision==0.16.0+cu121 torchaudio==2.1.0+cu121 torchtext==0.16.0 torchdata==0.7.0 --extra-index-url https://download.pytorch.org/whl/cu121 -U
+    - pip install notebook pyngrok pickleshare ipywidgets imageio-ffmpeg pandas numpy==1.23.5 ninja
+    - pip install https://download.pytorch.org/whl/cu121/xformers-0.0.22.post7-cp310-cp310-manylinux2014_x86_64.whl
+    - sed -i 's/return caster.operator typename make_caster<T>::template cast_op_type<T>();/return caster;/' /usr/local/lib/python3.10/site-packages/torch/include/pybind11/cast.h
+    - pip install transformers==4.31.0 sentencepiece diffusers tokenizers datasets accelerate evaluate
+    - pip install git+https://github.com/haotian-liu/LLaVA@7ace501
+    - git clone -b dev https://github.com/camenduru/ml-mgie-hf /content/ml-mgie-hf && mv /content/ml-mgie-hf/llava.py /usr/local/lib/python3.10/site-packages/llava/model/llava.py && mv /content/ml-mgie-hf/train.py /usr/local/lib/python3.10/site-packages/llava/train/train.py
+    - aria2c --console-log-level=error -c -x 16 -s 16 -k 1M https://huggingface.co/camenduru/pytorch_mgie/resolve/main/mgie_7b/mllm.pt -d /content/ml-mgie-hf/data/mgie_7b -o mllm.pt
+    - aria2c --console-log-level=error -c -x 16 -s 16 -k 1M https://huggingface.co/camenduru/pytorch_mgie/resolve/main/mgie_7b/unet.pt -d /content/ml-mgie-hf/data/mgie_7b -o unet.pt
+    - aria2c --console-log-level=error -c -x 16 -s 16 -k 1M https://huggingface.co/camenduru/pytorch_mgie/raw/main/LLaVA-7B-v1/added_tokens.json -d /content/ml-mgie-hf/data/LLaVA-7B-v1 -o added_tokens.json
+    - aria2c --console-log-level=error -c -x 16 -s 16 -k 1M https://huggingface.co/camenduru/pytorch_mgie/raw/main/LLaVA-7B-v1/config.json -d /content/ml-mgie-hf/data/LLaVA-7B-v1 -o config.json
+    - aria2c --console-log-level=error -c -x 16 -s 16 -k 1M https://huggingface.co/camenduru/pytorch_mgie/raw/main/LLaVA-7B-v1/generation_config.json -d /content/ml-mgie-hf/data/LLaVA-7B-v1 -o generation_config.json
+    - aria2c --console-log-level=error -c -x 16 -s 16 -k 1M https://huggingface.co/camenduru/pytorch_mgie/resolve/main/LLaVA-7B-v1/pytorch_model-00001-of-00002.bin -d /content/ml-mgie-hf/data/LLaVA-7B-v1 -o pytorch_model-00001-of-00002.bin
+    - aria2c --console-log-level=error -c -x 16 -s 16 -k 1M https://huggingface.co/camenduru/pytorch_mgie/resolve/main/LLaVA-7B-v1/pytorch_model-00002-of-00002.bin -d /content/ml-mgie-hf/data/LLaVA-7B-v1 -o pytorch_model-00002-of-00002.bin
+    - aria2c --console-log-level=error -c -x 16 -s 16 -k 1M https://huggingface.co/camenduru/pytorch_mgie/raw/main/LLaVA-7B-v1/pytorch_model.bin.index.json -d /content/ml-mgie-hf/data/LLaVA-7B-v1 -o pytorch_model.bin.index.json
+    - aria2c --console-log-level=error -c -x 16 -s 16 -k 1M https://huggingface.co/camenduru/pytorch_mgie/raw/main/LLaVA-7B-v1/special_tokens_map.json -d /content/ml-mgie-hf/data/LLaVA-7B-v1 -o special_tokens_map.json
+    - aria2c --console-log-level=error -c -x 16 -s 16 -k 1M https://huggingface.co/camenduru/pytorch_mgie/raw/main/LLaVA-7B-v1/tokenizer.json -d /content/ml-mgie-hf/data/LLaVA-7B-v1 -o tokenizer.json
+    - aria2c --console-log-level=error -c -x 16 -s 16 -k 1M https://huggingface.co/camenduru/pytorch_mgie/resolve/main/LLaVA-7B-v1/tokenizer.model -d /content/ml-mgie-hf/data/LLaVA-7B-v1 -o tokenizer.model
+    - aria2c --console-log-level=error -c -x 16 -s 16 -k 1M https://huggingface.co/camenduru/pytorch_mgie/raw/main/LLaVA-7B-v1/tokenizer_config.json -d /content/ml-mgie-hf/data/LLaVA-7B-v1 -o tokenizer_config.json
+predict: "/src/predict.py:Predictor"
