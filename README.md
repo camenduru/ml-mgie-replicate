@@ -16,6 +16,7 @@ https://arxiv.org/abs/2309.17102
 https://mllm-ie.github.io/
 
 ### 🖼 Output
+![Screenshot 2024-02-10 072814](https://github.com/camenduru/ml-mgie-replicate/assets/54370274/6db3526b-d604-4a7f-a17c-4f4c4b4fa856)
 
 ### 🏢 Sponsor
 https://replicate.com
